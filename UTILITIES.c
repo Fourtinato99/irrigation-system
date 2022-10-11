@@ -19,6 +19,60 @@ void UTILITY_delay_ms(uint16 second)
 
 
 }
+//////////////////////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////////////////////
+
+////////////////////////////////////////////////////////////////////////////
+//    initiating button
+void UTILITY_init_button(void)
+{
+	
+	//////////////////////////////////////////////////////////////////////////
+	//
+	 CLR_BIT(DDRC,  SET_TIME_BT);    //set time  and data button
+	 SET_BIT(PORTC, SET_TIME_BT);	 //pull up
+
+	 CLR_BIT(DDRC,  SET_TIMER_BT);   //set timers button
+	 SET_BIT(PORTC, SET_TIMER_BT);	 //pull up
+
+	 CLR_BIT(DDRC,  MANUAL_BT);      //run manual button
+	 SET_BIT(PORTC, MANUAL_BT);	     //pull up
+
+	 CLR_BIT(DDRC,  UP_BT);          //up button
+	 SET_BIT(PORTC, UP_BT);          //pull up
+
+	 SET_BIT(DDRB,  DOWN_BT);        //down button
+	 SET_BIT(PORTB, DOWN_BT);
+
+	 CLR_BIT(DDRB,  RIGHT_BT);       //right button
+	 SET_BIT(PORTB, RIGHT_BT);       //pull up
+
+	 CLR_BIT(DDRB,  OK_BT);          //ok button
+	 SET_BIT(PORTB, OK_BT);          //pull up
+		//////////////////////////////////////////////////////////////////////////
+		
+		
+		
+		    //////////////////////////////////////////////////////////////////////////
+		    //set interrupt pins
+		    INTERRUPT_PC_init(11);   //pin change interrupt of PINC 3 ==>set time button
+
+		    INTERRUPT_PC_init(10);   //pin change interrupt of PINC 2 ==>set timer button
+
+		    INTERRUPT_PC_init(9);   //pin change interrupt of PINc 1  ==>manual button
+
+		    INTERRUPT_PC_init(8);   //pin change interrupt of PINC 0  ==>UP button
+
+		    INTERRUPT_PC_init(5);   //pin change interrupt of PINB 5  ==>Down button
+
+		    INTERRUPT_PC_init(4);   //pin change interrupt of PINB 4  ==>right button
+		    
+		    INTERRUPT_PC_init(3);   //pin change interrupt of PINB 3  ==>ok button
+		    //////////////////////////////////////////////////////////////////////////
+
+
+}
 
 void UTILITY_display_time(volatile uint8 DS_time[])
 {
@@ -165,11 +219,11 @@ void UTILITY_display_time(volatile uint8 DS_time[])
         if (3 == selector)   //days
         {
             LCD_write_chararcter(4);
-            LCD_write_num(DS_time[3] + 1);
+            LCD_write_num(DS_time[3]);
             LCD_write_chararcter(5);
         }
         else {
-            LCD_write_num(DS_time[3] + 1);
+            LCD_write_num(DS_time[3]);
         }
 
 
@@ -250,7 +304,7 @@ void UTILITY_display_time(volatile uint8 DS_time[])
         LCD_write_string(":");
         LCD_write_num(DS_time[0]);
         LCD_write_string(" / ");
-        LCD_write_num(DS_time[3] + 1);  //days
+        LCD_write_num(DS_time[3]);  //days
         LCD_write_string("        ");
 
         LCD_y_x(2, 1);
@@ -501,27 +555,7 @@ void UTILITY_display_timer(void)
             0B01110
         };
 		
-		uint8 start[] = {
-			0B00001,
-			0B10001,
-			0B11001,
-			0B11101,
-			0B11101,
-			0B11001,
-			0B10001,
-			0B00001
-		};
-		
-		uint8 period[] = {
-			0B10001,
-			0B10001,
-			0B10001,
-			0B11111,
-			0B11111,
-			0B10001,
-			0B10001,
-			0B10001
-		};
+	
 
         LCD_create_shape(off, 0);
         LCD_create_shape(on, 1);
@@ -529,8 +563,7 @@ void UTILITY_display_timer(void)
         LCD_create_shape(arrow_left, 2);
         LCD_create_shape(arrow_right, 3);
         LCD_create_shape(timer, 4);
-		LCD_create_shape(start, 5);
-		LCD_create_shape(period, 6);
+	
 
 
         timer_flag = 0;
@@ -544,7 +577,7 @@ void UTILITY_display_timer(void)
     //////////////////////////////////////////////////////////////////////////
     // display number of timers
     LCD_y_x(1, 1);
-    LCD_write_num(timer_changer);
+    LCD_write_num(timer_changer == 0 ? 0: timer_changer-1);
     LCD_write_string("   ");
 
 
@@ -553,7 +586,7 @@ void UTILITY_display_timer(void)
     //  display whether ON or OFF
 
     LCD_y_x(1, 4);
-    LCD_write_chararcter(timers.timer_properties.on_off);
+    LCD_write_chararcter(!timers.timer_properties.on_off);
     LCD_write_string(" ");
 
     //////////////////////////////////////////////////////////////////////////
@@ -647,7 +680,7 @@ void UTILITY_display_edit_timer(void)
         LCD_y_x(1, 1);
         LCD_write_string("status:  ");
 
-        selector == 1 ? (LCD_write_chararcter(2), LCD_write_chararcter(timers.timer_properties.on_off), LCD_write_chararcter(3)) : LCD_write_chararcter(timers.timer_properties.on_off);
+        selector == 1 ? (LCD_write_chararcter(2), LCD_write_chararcter(!timers.timer_properties.on_off), LCD_write_chararcter(3)) : LCD_write_chararcter(!timers.timer_properties.on_off);
         LCD_write_string("        ");
 
         LCD_y_x(2, 1);
@@ -661,119 +694,9 @@ void UTILITY_display_edit_timer(void)
         selector == 7 ? (LCD_write_chararcter(2), LCD_write_chararcter(timers.timer_properties.day6), LCD_write_chararcter(3)) : LCD_write_chararcter(timers.timer_properties.day6);
         selector == 8 ? (LCD_write_chararcter(2), LCD_write_chararcter(timers.timer_properties.day7), LCD_write_chararcter(3)) : LCD_write_chararcter(timers.timer_properties.day7);
         LCD_write_string("       ");
+	}
 
-        /*
-
-        //////////////////////////////////////////////////////////////////////////
-        //display whether timer on or off
-        LCD_y_x(1,1);
-        LCD_write_string("status:  ");
-
-
-        if(1 == selector)
-        {
-
-            //LCD_write_chararcter(2);
-            //LCD_write_chararcter(timers.timer_properties.on_off);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.on_off);
-        LCD_write_string("                 ");
-        //////////////////////////////////////////////////////////////////////////
-
-
-        LCD_y_x(2,1);
-        LCD_write_string("days: ");
-
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day1
-
-        if(2 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day1);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day1);
-
-        //////////////////////////////////////////////////////////////////////////
-
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day2
-        if(3 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day2);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day2);
-        //////////////////////////////////////////////////////////////////////////
-
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day3
-        if(4 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day3);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day3);
-        //////////////////////////////////////////////////////////////////////////
-
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day4
-        if(5 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day4);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day4);
-        //////////////////////////////////////////////////////////////////////////
-
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day5
-        if(6 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day5);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day5);
-        //////////////////////////////////////////////////////////////////////////
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day6
-        if(7 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day6);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day6);
-        //////////////////////////////////////////////////////////////////////////
-
-
-        //////////////////////////////////////////////////////////////////////////
-        //display status day7
-        if(8 == selector)
-        {
-            LCD_write_chararcter(2);
-            LCD_write_chararcter(timers.timer_properties.day7);
-            LCD_write_chararcter(3);
-        }
-        else    LCD_write_chararcter(timers.timer_properties.day7);
-        //////////////////////////////////////////////////////////////////////////
-
-
-        LCD_write_string("   ");
-       */
-    }
+       
 
     //////////////////////////////////////////////////////////////////////////
     //   start timer and period
@@ -825,7 +748,7 @@ void UTILITY_display_edit_timer(void)
         //////////////////////////////////////////////////////////////////////////
         //    start time
         LCD_y_x(1, 1);
-        LCD_write_string("start:  ");
+        LCD_write_string("START:  ");
 
         17 == selector ? (LCD_write_chararcter(2), LCD_write_num(timers.timer_properties.start_hours), LCD_write_chararcter(3)) : LCD_write_num(timers.timer_properties.start_hours);
         LCD_write_string(":");
@@ -837,7 +760,7 @@ void UTILITY_display_edit_timer(void)
         //  period time
 
         LCD_y_x(2, 1);
-        LCD_write_string("period:  ");
+        LCD_write_string("END:  ");
 
         19 == selector ? (LCD_write_chararcter(2), LCD_write_num(timers.timer_properties.period_hours), LCD_write_chararcter(3)) : LCD_write_num(timers.timer_properties.period_hours);
         LCD_write_string(":");
@@ -854,105 +777,37 @@ void UTILITY_display_edit_timer(void)
 
 
 
-//////////////////////////////////////////////////////////////////////////
-// get timer properties from EEPROM
-void UTILITY_get_timer_EEPROM(void)
-{
-	
-	timers.timer =  timer_changer == 0 ? 0 : EEPROM_read_64( (timer_changer+1)*8);
-}
-//////////////////////////////////////////////////////////////////////////
- 
 
 
 
-
-
-//////////////////////////////////////////////////////////////////////////
-//save timer to eeprom
-void UTILITY_save_timer_EEPROM(void)
-{
-	EEPROM_write_64( (timer_changer+1)*8,timers.timer);
-	
-}
-//////////////////////////////////////////////////////////////////////////
-
-
-
-
-//////////////////////////////////////////////////////////////////////////
-/// get the index of the next position if it empty or full
-
-void UTILITY_get_next_timer_index(uint8 num )
-{
-	while(1)
-	{
-		if(0 == timer_changer )                                   timer_changer = 1;
-		else if(  timer_changer >= 64   )                         break;
-		else if( ((all_timers.lower >> timer_changer)&1) == num ) return ;
-		else                                                      timer_changer++;
-		
-		//((all_timers.lower >> timer_changer)&1) == num ? return :timer_changer++;
-		
-	}
-	while(1)
-	{
-		if(timer_changer == 128)
-		{
-			timer_changer = 0;
-			return ;
-		}
-		else if( ((all_timers.upper >> (timer_changer%64) )&1) == num ) return ;
-		else                                                      timer_changer++;
-		//((all_timers.upper >> timer_changer)&1) == num ? return :timer_changer++;
-		
-	}
-
-}
-//////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////
-//          
-
-void UTILITY_re_set_timer_bit(void)
-{
-	if (0 == timer_changer )            CLR_BIT( all_timers.lower ,0);
-	else if(timer_changer < 64)         TOG_BIT( all_timers.lower , timer_changer    );
-	else                                TOG_BIT( all_timers.upper , timer_changer%64 );
-	
-	
-	EEPROM_write_64(0,all_timers.lower);
-	EEPROM_write_64(8,all_timers.upper);
-	
-}
-//////////////////////////////////////////////////////////////////////////
-
-
-
-
-//////////////////////////////////////////////////////////////////////////
-// set new timer or edit existint timer
 void UTILITy_save_timer(void)
 {
-	UTILITY_re_set_timer_bit();
-	UTILITY_get_next_timer_index(0);
-	UTILITY_re_set_timer_bit();
-	UTILITY_save_timer_EEPROM();
+	 
+	EEPROM_write_64(timer_changer*8,0);
+	timer_changer = 1;
+	
+	while(timer_changer<128)
+	{
+		if(0 < EEPROM_read_8(timer_changer*8))
+		{
+			EEPROM_write_64(timer_changer*8 , timers.timer);
+			break;
+		}
+		timer_changer++;
+	}
+	
 	
 }
-//////////////////////////////////////////////////////////////////////////
 
 
-
-//////////////////////////////////////////////////////////////////////////
-// remove new timer or edit existing timer
 void UTILITy_remove_timer(void)
 {
-	UTILITY_re_set_timer_bit();
-	
+	EEPROM_write_64(timer_changer*8,0);
 }
-//////////////////////////////////////////////////////////////////////////
+
+
+
+
 
 
 
@@ -961,13 +816,18 @@ void UTILITy_remove_timer(void)
 //    function get all running time in the same time
 void UTILITY_get_running_timers(void)
 {
-	
-	while(0 != timer_changer )
+	timer_changer = 0 ;
+	running_timers = 0;
+	while(timer_changer < 128 )
 	{
-		UTILITY_get_timer_EEPROM();
-		UTILITY_running_or_not();
+		
+		if(0 == EEPROM_read_8(timer_changer*8))
+		{
+			timers.timer = EEPROM_read_64(timer_changer*8);
+			UTILITY_running_or_not();
+			
+		}
 		timer_changer++;
-		UTILITY_get_next_timer_index(1);
 	}
 }
 //////////////////////////////////////////////////////////////////////////
@@ -980,7 +840,7 @@ void UTILITY_running_or_not(void)
 {
 	uint8 day_on = 0;
 	uint8 time_on = 0;
-	if(1 == timers.timer_properties.on_off)
+	if(0 == timers.timer_properties.on_off )
 	{
 		//////////////////////////////////////////////////////////////////////////
 		     if(timers.timer_properties.day1 == 1 && DS_time[3] == 1) day_on= 1;
@@ -1041,9 +901,6 @@ void UTILITY_running_or_not(void)
 
 			}
 			//////////////////////////////////////////////////////////////////////////
-			
-			
-			
 			
 		}
 		

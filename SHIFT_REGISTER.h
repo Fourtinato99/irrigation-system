@@ -10,18 +10,17 @@
 #define SHIFT_REGISTER_H_
 #include "STD_MACROS.h"
 
-#define INIT_SHIFT_REGISTER (DDRD |=0b11100000)
+#define INIT_SHIFT_REGISTER (DDRD |=0b000011100)
 
-#define DATA_PIN    PORTD5
+#define DATA_PIN    PORTD2
 
-#define LATCH_PIN   PORTD6
-#define CLK_PIN     PORTD7
+#define LATCH_PIN   PORTD3
+#define CLK_PIN     PORTD4
 
 
 #define DATA_IN(x)  (  (x==1) ?   SET_BIT(PORTD,DATA_PIN)   :    CLR_BIT(PORTD,DATA_PIN)    )
-#define CLK_IN(x)   (  (x==1) ?   SET_BIT(PORTD,CLK_PIN)    :    CLR_BIT(PORTD,CLK_PIN)     )
 #define LATCH_IN(x) (  (x==1) ?   SET_BIT(PORTD,LATCH_PIN)  :    CLR_BIT(PORTD,LATCH_PIN)   )
-
+#define CLK_IN(x)   (  (x==1) ?   SET_BIT(PORTD,CLK_PIN)    :    CLR_BIT(PORTD,CLK_PIN)     )
 void SHIFT_REGISTER_init(void);
 
 

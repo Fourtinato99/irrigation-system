@@ -9,7 +9,7 @@
 
 void LCD_init_4(void){
 	
-	INIT_PINS_OUT(0xFF); //initiate pins as output
+	INIT_PINS_OUT; //initiate pins as output
 	_delay_ms(10);  //wait for stable power
 	
 	EN(0);
@@ -76,7 +76,7 @@ void LCD_y_x(uint8_t y, uint8_t x){
 
 void LCD_write_chararcter(uint8_t ch){
 	
-	_delay_ms(1);
+	//_delay_ms(1);
 	RS(1);
 	
 	D4( ((ch>>4) & 1) );

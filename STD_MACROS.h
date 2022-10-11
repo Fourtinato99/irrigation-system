@@ -34,32 +34,34 @@ typedef struct {
 }all;
 
 typedef struct {
-
-	uint32 timer1 : 1;
-	uint32 timer2 : 1;
-	uint32 timer3 : 1;
-	uint32 timer4 : 1;
-	uint32 timer5 : 1;
-	uint32 timer6 : 1;
-	uint32 timer7 : 1;
-	uint32 timer8 : 1;
-
-
-
-	uint32 day1 : 1;
-	uint32 day2 : 1;
-	uint32 day3 : 1;
-	uint32 day4 : 1;
-	uint32 day5 : 1;
-	uint32 day6 : 1;
-	uint32 day7 : 1;
-	uint32 on_off : 1;
 	
-	uint32 period_minutes : 6;
-	uint32 period_hours   : 5;
+	uint64 on_off : 8;
 
-	uint32 start_minutes  : 6;
-	uint32 start_hours    : 5;
+	uint64 timer1 : 1;
+	uint64 timer2 : 1;
+	uint64 timer3 : 1;
+	uint64 timer4 : 1;
+	uint64 timer5 : 1;
+	uint64 timer6 : 1;
+	uint64 timer7 : 1;
+	uint64 timer8 : 1;
+
+
+
+	uint64 day1 : 1;
+	uint64 day2 : 1;
+	uint64 day3 : 1;
+	uint64 day4 : 1;
+	uint64 day5 : 1;
+	uint64 day6 : 1;
+	uint64 day7 : 1;
+	
+	
+	uint64 period_minutes : 6;
+	uint64 period_hours   : 5;
+
+	uint64 start_minutes  : 6;
+	uint64 start_hours    : 5;
 }timerSp;
 
 typedef union

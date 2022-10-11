@@ -12,7 +12,7 @@
 #include "I2C.h"
 
 #define  DS1307_ADDRESS 0b1101000
-
+extern volatile uint8 date_counter;
 
 void DS1307_read_time(volatile uint8 arr[]);
 void DS1307_save_time(volatile uint8 arr[]);

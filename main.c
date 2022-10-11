@@ -19,33 +19,30 @@
 
 
 volatile uint8 set_time_mode = 0;
-
-volatile uint8 manual_mode = 0;
-volatile uint8 DS_time[7] = { 0 };
-
-// set timers variables
 volatile uint8 set_timers_mode;
-volatile uint32 timer_properties;
+volatile uint8 manual_mode = 0;
+
+volatile uint8 DS_time[7] = { 0 };
+volatile uint8 DS_time_temp[7] = { 0 };
+// set timers variables
 
 volatile timerUp timers ;
-volatile all all_timers ;
-
-
-volatile uint8 timer_changer;
-
-volatile uint8 timer_flag;
-volatile uint8 display_timer_properties;
-volatile uint8 selector;
-
-volatile uint8 selector = 0;
-
-volatile uint8 DS_time_temp[7] = { 0 };
-volatile uint8 OK = 0;
-
-volatile uint8 running_timers = 0;
 
 volatile uint8 time_mode_flag = 0;
+volatile uint8 timer_flag;
 volatile uint8 manual_flag = 0;
+
+
+
+volatile uint8 display_timer_properties;
+volatile uint8 selector = 0;
+volatile uint8 OK = 0;
+volatile uint8 running_timers = 0;
+volatile uint8 date_counter = 0;
+volatile uint8 timer_changer = 0;
+
+
+volatile uint8 prev_second = 0;
 
 
 int main(void)
@@ -56,6 +53,9 @@ int main(void)
     /* Replace with your application code */
     //initiating LCD
     LCD_init_4();
+	LCD_y_x(1,1);
+	
+	
 
 	//////////////////////////////////////////////////////////////////////////
 	
@@ -66,92 +66,84 @@ int main(void)
     //initiating shift register 
     SHIFT_REGISTER_init();
 	SHIFT_REGISTER_OUT(0);
+	
 	//////////////////////////////////////////////////////////////////////////
 	
 	
 	//////////////////////////////////////////////////////////////////////////
 	// intiating timer overflow
 	TIMER1_init_normal(5);
+	SET_BIT(DDRD,0);
+	 
+	//////////////////////////////////////////////////////////////////////////
+	
 
 		
-
 	
 
     //////////////////////////////////////////////////////////////////////////
     //initiating I2C master
     I2C_master_init(50);
-    I2C_master_start();
+   // I2C_master_start();
+   DS1307_read_time(DS_time);
+   DS1307_save_time(DS_time);
+   prev_second = DS_time[0];
 	//////////////////////////////////////////////////////////////////////////
 	
 	
 	
-	//////////////////////////////////////////////////////////////////////////
-	// get all_timer
-	if(1 == (EEPROM_read_64(0) & 1) )
-	{
-		EEPROM_write_64(0,0);
-		EEPROM_write_64(8,0);
-		
-	}
 	
-	all_timers.lower = EEPROM_read_64(0);
-	all_timers.upper = EEPROM_read_64(8);
-	//////////////////////////////////////////////////////////////////////////
-
+	
 
 
 
     //////////////////////////////////////////////////////////////////////////
     //initiating interrupt for buttons using pin change interrupt
      //1-set pins as input with pull up
-    CLR_BIT(DDRD, 0);   //set time  and data button
-    SET_BIT(PORTD, 0);	//pull up
-
-    CLR_BIT(DDRD, 1);   //set timers button
-    SET_BIT(PORTD, 1);	//pull up
-
-    CLR_BIT(DDRD, 2);   //run manual button
-    SET_BIT(PORTD, 2);	//pull up
-
-    CLR_BIT(DDRD, 3);   //up button
-    SET_BIT(PORTD, 3);   //pull up
-
-    SET_BIT(DDRD, 4);   //down button
-    SET_BIT(PORTD, 4);
-
-    CLR_BIT(DDRC, 0);    //cancel button
-    SET_BIT(PORTC, 0);    //pull up
-
-    CLR_BIT(DDRC, 1);    //ok button
-    SET_BIT(PORTC, 1);    //pull up
-
-    CLR_BIT(DDRC, 2);    //right button
-    SET_BIT(PORTC, 2);    //pull up
-
-
-	
+   
+	UTILITY_init_button();
 	//////////////////////////////////////////////////////////////////////////
 	
-	
-	
-	
-    //////////////////////////////////////////////////////////////////////////
-    //set interrupt pins
-    INTERRUPT_PC_init(9);   //pin change interrupt of PINC 1 ==>ok button
-
-    INTERRUPT_PC_init(10);   //pin change interrupt of PINC 1 ==>right button
-
-    INTERRUPT_PC_init(16);   //pin change interrupt of PIND 0 ==>set time button
-
-    INTERRUPT_PC_init(17);   //pin change interrupt of PIND 1 ==>set timers button
-
-    INTERRUPT_PC_init(18);   //pin change interrupt of PIND 2 ==>manual button
-
-    INTERRUPT_PC_init(19);   //pin change interrupt of PIND 3 ==>up button
 	//////////////////////////////////////////////////////////////////////////
+	// initiating some testing timing
+	
+	for(uint8 i=1 ; i<=24;i++)
+	{
+		timers.timer= 0x7fff00;
+		timers.timer_properties.start_hours = i-1;
+		timers.timer_properties.start_minutes = 0;
+		timers.timer_properties.period_hours = i-1;
+		timers.timer_properties.period_minutes = 10;
+		EEPROM_write_64(i*8,timers.timer);
+		
+	}
+	
+		for(uint8 i=1 ; i<=24;i++)
+		{
+			timers.timer= 0x7fff00;
+			timers.timer_properties.start_hours = i-1;
+			timers.timer_properties.start_minutes = 15;
+			timers.timer_properties.period_hours = i-1;
+			timers.timer_properties.period_minutes = 30;
+			EEPROM_write_64(25*8+i*8,timers.timer);
+			
+		}
+		
+		
+				for(uint8 i=1 ; i<=24;i++)
+				{
+					timers.timer= 0x7fff00;
+					timers.timer_properties.start_hours = i-1;
+					timers.timer_properties.start_minutes = 35;
+					timers.timer_properties.period_hours = i-1;
+					timers.timer_properties.period_minutes = 55;
+					EEPROM_write_64(50*8+i*8,timers.timer);
+					
+				}
+	
+	
 
-
-
+  
 
     //////////////////////////////////////////////////////////////////////////
     while (1)
@@ -232,6 +224,7 @@ int main(void)
         //////////////////////////////////////////////////////////////////////////
         //         turn on/off  relay
         SHIFT_REGISTER_OUT(running_timers);
+		_delay_ms(100);
         //////////////////////////////////////////////////////////////////////////
 
 
@@ -244,15 +237,16 @@ int main(void)
 
 
 
-ISR(PCINT2_vect)
+ISR(PCINT1_vect)
 {
-    for (uint16 i = 0;i < 60000;i++); //delay
+    for (uint16 i = 0;i <= 65000 ;i++); //delay
 
-    if (0 == READ_BIT(PIND, 0)) //set time button isr
+    if (0 == READ_BIT(PINC, SET_TIME_BT)) //set time button isr
     {
         set_time_mode = set_time_mode == 0 ? 1 : 0;
         manual_mode = 0;
         manual_flag = 0;
+		selector = 0;
         set_timers_mode = 0;
         time_mode_flag = 1;
 
@@ -264,7 +258,7 @@ ISR(PCINT2_vect)
         DS_time_temp[5] = DS_time[5];
         DS_time_temp[6] = DS_time[6];
 
-        while (0 == READ_BIT(PIND, 0));
+        while (0 == READ_BIT(PINC, SET_TIME_BT));
     }
     //////////////////////////////////////////////////////////////////////////
 
@@ -273,7 +267,7 @@ ISR(PCINT2_vect)
     //////////////////////////////////////////////////////////////////////////
     //        set timers button ISR
 
-    if (0 == READ_BIT(PIND, 1))
+    if (0 == READ_BIT(PINC, SET_TIMER_BT))
     {
         set_time_mode = 0;
         manual_mode = 0;
@@ -281,7 +275,8 @@ ISR(PCINT2_vect)
         manual_flag = 0;
         time_mode_flag = 0;
 		timers.timer = 0;
-		timer_changer = 0;
+		timers.timer_properties.on_off=1;
+		timer_changer = 0 ;
 
 
         timer_flag = 1;
@@ -291,7 +286,7 @@ ISR(PCINT2_vect)
 		
 
 
-        while (0 == READ_BIT(PIND, 1));  //waiting until removing his fucking finger
+        while (0 == READ_BIT(PINC , SET_TIMER_BT));  //waiting until removing his fucking finger
 
     }
     //////////////////////////////////////////////////////////////////////////
@@ -302,7 +297,7 @@ ISR(PCINT2_vect)
     //////////////////////////////////////////////////////////////////////////
     //        manual button ISR
 
-    if (0 == READ_BIT(PIND, 2))
+    if (0 == READ_BIT(PINC, MANUAL_BT))
     {
         set_time_mode = 0;
         set_timers_mode = 0;
@@ -310,7 +305,7 @@ ISR(PCINT2_vect)
         manual_mode = manual_mode == 0 ? 1 : 0;
         manual_flag = 1;
 
-        while (0 == READ_BIT(PIND, 2));  //waiting until removing his fucking finger
+        while (0 == READ_BIT(PINC, MANUAL_BT));  //waiting until removing his fucking finger
 
     }
     //////////////////////////////////////////////////////////////////////////
@@ -320,7 +315,7 @@ ISR(PCINT2_vect)
 
     //////////////////////////////////////////////////////////////////////////
     //up button  isr
-    if (0 == READ_BIT(PIND, 3))
+    if (0 == READ_BIT(PINC, UP_BT))
     {
 
         if (1 == set_timers_mode )
@@ -329,9 +324,33 @@ ISR(PCINT2_vect)
 			//    controller of timer changer
 			if(display_timer_properties == 1)
 			{
-				timer_changer++;
-				UTILITY_get_next_timer_index(1);
-				UTILITY_get_timer_EEPROM();	
+				
+				
+				while(timer_changer <128)
+				{
+					if(0 == EEPROM_read_8((timer_changer)*8) && timer_changer != 0 )
+					{
+						timers.timer = EEPROM_read_64((timer_changer)*8)	;
+						timer_changer++;
+						break;
+					}
+					timer_changer++;
+					
+				}
+					
+					
+				if(128 == timer_changer)
+				{
+					timer_changer = 0;
+					timers.timer = 0;
+					timers.timer_properties.on_off = 1;
+				}
+					
+					
+							
+				
+				
+				
 			}
 
             //////////////////////////////////////////////////////////////////////////
@@ -370,10 +389,12 @@ ISR(PCINT2_vect)
 
             //////////////////////////////////////////////////////////////////////////
             //control start time and period
-            else if (17 == selector) timers.timer_properties.start_hours++;
-            else if (18 == selector) timers.timer_properties.start_minutes++;
-            else if (19 == selector) timers.timer_properties.period_hours++;
-            else if (20 == selector) timers.timer_properties.period_minutes++;
+            else if (17 == selector) (timers.timer_properties.start_hours++     , timers.timer_properties.start_hours    %=24);
+            else if (18 == selector) ( timers.timer_properties.start_minutes++  , timers.timer_properties.start_minutes  %=60);
+            else if (19 == selector) (timers.timer_properties.period_hours++    , timers.timer_properties.period_hours   %=24);
+            else if (20 == selector) ( timers.timer_properties.period_minutes++ , timers.timer_properties.period_minutes %=60);
+			
+			
             //////////////////////////////////////////////////////////////////////////
 
 
@@ -386,10 +407,17 @@ ISR(PCINT2_vect)
             // controller of time
             DS_time_temp[selector]++;
 			
+			
+			
                  if (0 == selector) DS_time_temp[selector] %= 60;   //seconds
             else if (1 == selector) DS_time_temp[selector] %= 60;   //minutes
             else if (2 == selector) DS_time_temp[selector] %= 24;   //hours
-            else if (3 == selector) DS_time_temp[selector] %= 7;    //days
+            else if (3 == selector)//days
+			{
+				DS_time_temp[selector] %=8;
+				
+				if(0 == DS_time_temp[selector]) DS_time_temp[selector] = 1;
+			}     
             else if (4 == selector) DS_time_temp[selector] %= 31;   //date
             else if (5 == selector) DS_time_temp[selector] %= 12;   //months
             else if (6 == selector) DS_time_temp[selector] %= 50;   //years
@@ -404,7 +432,7 @@ ISR(PCINT2_vect)
 
 
 
-        while (0 == READ_BIT(PIND, 3));
+        while (0 == READ_BIT(PINC, UP_BT));
     }
     //////////////////////////////////////////////////////////////////////////
 
@@ -412,15 +440,15 @@ ISR(PCINT2_vect)
 
 
 
-ISR(PCINT1_vect)
+ISR(PCINT0_vect)
 {
-    for (uint16 i = 0;i < 60000;i++); //delay
+    for (uint16 i = 1; i!=0 ;i++); //delay
 	
 	
 	//////////////////////////////////////////////////////////////////////////
 	////     OK button
 
-    if (0 == READ_BIT(PINC, 1)) 
+    if (0 == READ_BIT(PINB, OK_BT)) 
     {
 
         
@@ -434,32 +462,37 @@ ISR(PCINT1_vect)
 			//save the new or edit timer
 			if(display_timer_properties == 0)
 			{
-				if ( 1 == timers.timer_properties.on_off ) UTILITy_save_timer();
+				if ( 0 == timers.timer_properties.on_off ) UTILITy_save_timer();
 				else                                       UTILITy_remove_timer();
 				
 			}
-			display_timer_properties = display_timer_properties == 0 ? 1 : 0;
-            selector = 1;
+			
+			
+				display_timer_properties = display_timer_properties == 0 ? 1 : 0;
+                selector = 1;
+			
+			
+			
         }
 		//////////////////////////////////////////////////////////////////////////
 		
         OK = 1;
 
-        while (0 == READ_BIT(PINC, 1));
+        while (0 == READ_BIT(PINB, OK_BT));
 
     }
 
 
     //////////////////////////////////////////////////////////////////////////
 	//// right button
-    if (0 == READ_BIT(PINC, 2)) 
+    if (0 == READ_BIT(PINB, RIGHT_BT)) 
     {
    
         selector++;
         selector = set_timers_mode == 1 ? selector % 21 : selector % 8;
            
 
-        while (0 == READ_BIT(PINC, 2));
+        while (0 == READ_BIT(PINB, RIGHT_BT));
     }
 	//////////////////////////////////////////////////////////////////////////
 	
@@ -477,33 +510,97 @@ ISR(PCINT1_vect)
 
 ISR(TIMER1_OVF_vect)
 {
+	////////////////////////////////////////////////////////////////////////////
+	// res avr if hang on 
 	
-	timerUp temp_timers = timers;
-	uint8   temp_timer_chnager = timer_changer;
-	//////////////////////////////////////////////////////////////////////////
-	//   disable global interrupt
-	//CLR_BIT(SREG,7);
-	//////////////////////////////////////////////////////////////////////////
-	
-	
+	if(prev_second == DS_time[0]) CLR_BIT(PORTD,1);
+	else   prev_second = DS_time[0];
 	
 	//////////////////////////////////////////////////////////////////////////
-	//   _get_running_timers
-	timer_changer = 1;
-	running_timers = 0;
 	
-	TOG_BIT(PORTD,4);
 	
-	UTILITY_get_running_timers();
 	
 	
 	//////////////////////////////////////////////////////////////////////////
-	//   enable global interrupt
-	//SET_BIT(SREG,7);
-	//////////////////////////////////////////////////////////////////////////
+	if (0 == manual_mode)
+	{
+		timerUp temp_timers = timers;
+		uint8   temp_timer_chnager = timer_changer;
+		//////////////////////////////////////////////////////////////////////////
+		//   disable global interrupt
+		//CLR_BIT(SREG,7);
+		//////////////////////////////////////////////////////////////////////////
+		
+		
+		
+		//////////////////////////////////////////////////////////////////////////
+		//   _get_running_timers
+		timer_changer = 1;
+		running_timers = 0;
+		
+		TOG_BIT(PORTD,0);
+		
+		UTILITY_get_running_timers();
+		
+		
+		//////////////////////////////////////////////////////////////////////////
+		//   enable global interrupt
+		//SET_BIT(SREG,7);
+		//////////////////////////////////////////////////////////////////////////
+		
+		timer_changer = temp_timer_chnager;
+		timers = temp_timers;
+		
+		
+		//////////////////////////////////////////////////////////////////////////
+		// calibrate time
+		DS1307_read_time(DS_time);
+		if (DS_time[4] != date_counter)
+		{
+			
+			DS_time_temp[0] = DS_time[0];
+			DS_time_temp[1] = DS_time[1];
+			DS_time_temp[2] = DS_time[2];
+			DS_time_temp[3] = DS_time[3];
+			DS_time_temp[4] = DS_time[4];
+			DS_time_temp[5] = DS_time[5];
+			DS_time_temp[6] = DS_time[6];
+			date_counter = DS_time[4];
+			
+			
+			if(DS_time_temp[0]+8 > 59)
+			{
+				if(DS_time_temp[1]+1 > 59)
+				{
+					if(DS_time_temp[2]+1 > 23)
+					{
+						DS_time_temp[4] = 0;
+						DS_time_temp[3] = DS_time_temp[3] == 7 ? 1 :DS_time_temp[3]+1;
+						DS_time_temp[2] = 0;
+						DS_time_temp[1] = 0;
+						DS_time_temp[0] = (8-(59-DS_time_temp[0]));
+						
+					}
+					else
+					{
+						DS_time_temp[2]++;
+						DS_time_temp[1]++;
+						DS_time_temp[0] += (8-(59-DS_time_temp[0]));
+					}
+				}
+				else
+				{
+					DS_time_temp[1]++;
+					DS_time_temp[0] += (8-(59-DS_time_temp[0]));
+				}
+			}
+			else DS_time_temp[0]+=8;
+			 
+			DS1307_save_time(DS_time_temp);
+		}
+		
+	}
 	
-	timer_changer = temp_timer_chnager;
-	timers = temp_timers;
 	
 
 }

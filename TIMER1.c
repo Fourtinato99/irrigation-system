@@ -14,7 +14,7 @@ void TIMER1_init_normal(uint8 prescalar){
 	TC1_CRB = (TC1_CRB & 0xF8)|(0x07 & prescalar);
 	
 	//clear counter register
-	TC1_CNTR = 0;
+	TC1_CNTR = 65000;
 	
 	//select waveform generator mode :normal mode WGM0,1,2,3 = 0 0 0 0
 	//TC1_CRA = ( TC1_CRA & 0xFC); // TC1_CRA & 0xFC % 0b1111 1100

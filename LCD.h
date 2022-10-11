@@ -10,17 +10,18 @@
 #define LCD_H_
 
 #include "STD_MACROS.h"
-#define LCD_PORT PORTB
-#define INIT_PINS_OUT(x)( DDRB |= x)
+
+#define INIT_PINS_OUT (DDRD |= 0B11100000,DDRB |= 0B00000111)
+					  
 
 
-#define RS(x)(  x==1 ? SET_BIT(LCD_PORT,0) : CLR_BIT(LCD_PORT,0))
-#define EN(x)(  x==1 ? SET_BIT(LCD_PORT,1) : CLR_BIT(LCD_PORT,1))
+#define RS(x)(  x==1 ? SET_BIT(PORTB,2) : CLR_BIT(PORTB,2))
+#define EN(x)(  x==1 ? SET_BIT(PORTB,1) : CLR_BIT(PORTB,1))
 
-#define D4(x)(  x==1 ? SET_BIT(LCD_PORT,2) : CLR_BIT(LCD_PORT,2))
-#define D5(x)(  x==1 ? SET_BIT(LCD_PORT,3) : CLR_BIT(LCD_PORT,3))
-#define D6(x)(  x==1 ? SET_BIT(LCD_PORT,4) : CLR_BIT(LCD_PORT,4))
-#define D7(x)(  x==1 ? SET_BIT(LCD_PORT,5) : CLR_BIT(LCD_PORT,5))
+#define D4(x)(  x==1 ? SET_BIT(PORTB,0) : CLR_BIT(PORTB,0))
+#define D5(x)(  x==1 ? SET_BIT(PORTD,7) : CLR_BIT(PORTD,7))
+#define D6(x)(  x==1 ? SET_BIT(PORTD,6) : CLR_BIT(PORTD,6))
+#define D7(x)(  x==1 ? SET_BIT(PORTD,5) : CLR_BIT(PORTD,5))
 
 
 void LCD_init_4(void);

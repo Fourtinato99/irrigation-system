@@ -10,9 +10,6 @@
 
 void SHIFT_REGISTER_init(void){
 	INIT_SHIFT_REGISTER ;
-	CLR_BIT(PORTD,5);
-	CLR_BIT(PORTD,6);
-	CLR_BIT(PORTD,7);
 }
 void SHIFT_REGISTER_OUT(uint8_t data){
 	

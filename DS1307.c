@@ -14,7 +14,7 @@ void DS1307_read_time(volatile uint8 arr[]){
 	
 	
 	//first read from DS1307 as BCD format
-	I2C_master_restart();
+	I2C_master_start();
 	I2C_master_send_A_W(DS1307_ADDRESS);
 	I2C_master_send_D(0x00);
 	I2C_master_restart();
@@ -27,15 +27,17 @@ void DS1307_read_time(volatile uint8 arr[]){
 	arr[5] = I2C_master_recieve(1);		//months
 	arr[6] = I2C_master_recieve(1);		//yeas
 	
+	I2C_master_stop();
+	
 	
 	//then convert BCD to binary
-	arr[0] = (arr[0] >> 4) * 10 + (arr[0] & 0x0f);
-	arr[1] = (arr[1] >> 4) * 10 + (arr[1] & 0x0f);
-	arr[2] = (arr[2] >> 4) * 10 + (arr[2] & 0x07);
+	arr[0] = (arr[0] >> 4) * 10 + (arr[0] & 0x0f);   //seconds
+	arr[1] = (arr[1] >> 4) * 10 + (arr[1] & 0x0f);   //minutes
+	arr[2] = (arr[2] >> 4) * 10 + (arr[2] & 0x0f);   //hours
 	
-	arr[4] = (arr[4] >> 4) * 10 + (arr[4] & 0x0f);
-	arr[5] = (arr[5] >> 4) * 10 + (arr[5] & 0x0f);
-	arr[6] = (arr[6] >> 4) * 10 + (arr[6] & 0x0f);
+	arr[4] = (arr[4] >> 4) * 10 + (arr[4] & 0x0f);    //date
+	arr[5] = (arr[5] >> 4) * 10 + (arr[5] & 0x0f);    //months
+	arr[6] = (arr[6] >> 4) * 10 + (arr[6] & 0x0f);    //years
 
 	
 }
@@ -45,6 +47,7 @@ void DS1307_save_time(volatile uint8 arr[])
 {
 	
 	//first convert binary to BCB
+	date_counter = arr[4];
 	
 	arr[0] =( (arr[0] / 10 ) << 4) | (arr[0] % 10 );
 	arr[1] =( (arr[1] / 10 ) << 4) | (arr[1] % 10 );
@@ -56,7 +59,7 @@ void DS1307_save_time(volatile uint8 arr[])
 	
 	//then save to DS1307 ic
 	
-	I2C_master_restart();
+	I2C_master_start();
 	I2C_master_send_A_W(DS1307_ADDRESS);
 	I2C_master_send_D(0x00);
 	I2C_master_send_D( arr[0]);
@@ -68,4 +71,6 @@ void DS1307_save_time(volatile uint8 arr[])
 	I2C_master_send_D( arr[4]);
 	I2C_master_send_D( arr[5]);
 	I2C_master_send_D( arr[6]);
+	I2C_master_stop();
+	
 }
